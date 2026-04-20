@@ -1,0 +1,31 @@
+# Plugin crate for `com.acme.hello`. Kept OUTSIDE the main workspace
+# because it targets `wasm32-unknown-unknown` — making it a member
+# would force workspace-wide target gating.
+#
+# Build:
+#   cargo build --target wasm32-unknown-unknown --release
+#   mkdir -p dist
+#   cp target/wasm32-unknown-unknown/release/acme_hello.wasm dist/plugin.wasm
+#
+# The UI side (ui/remoteEntry.js) is built separately — see ui/ and
+# the root rsbuild config. One plugin directory, two contributions.
+[package]
+name = "acme-hello"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+blocks-sdk = { path = "../../crates/blocks-sdk", default-features = false, features = ["wasm"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+# Plugins live on the edge — shave the wasm.
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

@@ -1,0 +1,13 @@
+id: com.acme.wasm-demo
+version: 0.1.0
+display_name: "Wasm demo plugin"
+description: "Reference Wasm plugin — two nodes, `double` (doubles a number) and `add` (sums two numbers)."
+
+contributes:
+  wasm_modules:
+    - path: dist/plugin.wasm
+  kinds: []
+
+requires:
+  - id: spi.msg
+    version: "^1"

@@ -1,0 +1,117 @@
+{
+  "id": "com_acme_hello",
+  "name": "com_acme_hello",
+  "metaData": {
+    "name": "com_acme_hello",
+    "type": "app",
+    "buildInfo": {
+      "buildVersion": "0.1.0",
+      "buildName": "@acme/plugin-hello"
+    },
+    "remoteEntry": {
+      "name": "remoteEntry.js",
+      "path": "",
+      "type": "global"
+    },
+    "types": {
+      "path": "",
+      "name": "",
+      "zip": "@mf-types.zip",
+      "api": "@mf-types.d.ts"
+    },
+    "globalName": "com_acme_hello",
+    "pluginVersion": "0.6.16",
+    "publicPath": "auto",
+    "prefetchInterface": false
+  },
+  "shared": [
+    {
+      "id": "com_acme_hello:react-dom",
+      "name": "react-dom",
+      "version": "19.2.5",
+      "singleton": true,
+      "requiredVersion": "^19.2.5",
+      "assets": {
+        "js": {
+          "async": [
+            "static/js/async/316.60988eff.js"
+          ],
+          "sync": [
+            "static/js/async/lib-react.bd3f887a.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      }
+    },
+    {
+      "id": "com_acme_hello:react",
+      "name": "react",
+      "version": "19.2.5",
+      "singleton": true,
+      "requiredVersion": "^19.2.5",
+      "assets": {
+        "js": {
+          "async": [
+            "static/js/async/316.60988eff.js"
+          ],
+          "sync": [
+            "static/js/async/lib-react.bd3f887a.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      }
+    },
+    {
+      "id": "com_acme_hello:zustand",
+      "name": "zustand",
+      "version": "5.0.12",
+      "singleton": true,
+      "requiredVersion": "^5.0.12",
+      "assets": {
+        "js": {
+          "async": [
+            "static/js/async/lib-react.bd3f887a.js"
+          ],
+          "sync": [
+            "static/js/async/316.60988eff.js",
+            "static/js/async/935.0a8c7314.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      }
+    }
+  ],
+  "remotes": [],
+  "exposes": [
+    {
+      "id": "com_acme_hello:Panel",
+      "name": "Panel",
+      "assets": {
+        "js": {
+          "sync": [
+            "static/js/async/lib-react.bd3f887a.js",
+            "static/js/async/341.5c6cae1f.js",
+            "static/js/async/__federation_expose_Panel.883569d3.js"
+          ],
+          "async": [
+            "static/js/async/316.60988eff.js"
+          ]
+        },
+        "css": {
+          "sync": [],
+          "async": []
+        }
+      },
+      "path": "./Panel"
+    }
+  ]
+}
