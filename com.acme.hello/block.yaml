@@ -1,7 +1,7 @@
 id: com.acme.hello
 version: 0.1.0
-display_name: "Hello plugin"
-description: "Reference plugin — the full shape: Module-Federation UI bundle + a Wasm node kind (`greeter`)."
+display_name: "Hello block"
+description: "Reference block — the full shape: Module-Federation UI bundle + a Wasm node kind (`greeter`)."
 
 contributes:
   ui:
@@ -10,12 +10,12 @@ contributes:
       - name: Panel
         module: "./Panel"
         contributes_to: sidebar
-  # Wasm module produced by this plugin's Rust crate (see src/lib.rs).
-  # Path is relative to the plugin dir; build with:
+  # Wasm module produced by this block's Rust crate (see src/lib.rs).
+  # Path is relative to the block dir; build with:
   #   cargo build --target wasm32-unknown-unknown --release
-  #   cp target/wasm32-unknown-unknown/release/acme_hello.wasm dist/plugin.wasm
+  #   cp target/wasm32-unknown-unknown/release/acme_hello.wasm dist/block.wasm
   wasm_modules:
-    - path: dist/plugin.wasm
+    - path: dist/block.wasm
   kinds: []
 
 requires:

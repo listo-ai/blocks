@@ -1,11 +1,11 @@
-//! Reference Wasm plugin: two compute nodes.
+//! Reference Wasm block: two compute nodes.
 //!
 //! - `com.acme.wasm-demo.double` — takes a number on port `in`,
 //!   emits `2 × n` on port `out`.
 //! - `com.acme.wasm-demo.add`    — takes `{"a": n, "b": m}` on port
 //!   `in`, emits `n + m` on port `out`.
 //!
-//! Kept deliberately minimal so the shape of a real plugin is easy
+//! Kept deliberately minimal so the shape of a real block is easy
 //! to see: one `impl WasmPlugin` block, one `export_plugin!`.
 //!
 //! Build:
@@ -14,7 +14,7 @@
 //! cargo build --target wasm32-unknown-unknown --release
 //! ```
 
-use extensions_sdk::wasm::{
+use blocks_sdk::wasm::{
     self, DescribeResponse, KindDecl, OnInputEnvelope, OutputMsg, WasmPlugin,
 };
 

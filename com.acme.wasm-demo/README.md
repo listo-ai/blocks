@@ -1,6 +1,6 @@
 # com.acme.wasm-demo
 
-Reference Wasm plugin. Two nodes:
+Reference Wasm block. Two nodes:
 
 | Kind | Input | Output |
 |---|---|---|
@@ -18,29 +18,29 @@ rustup target add wasm32-unknown-unknown
 **Every build:**
 
 ```bash
-cd plugins/com.acme.wasm-demo
+cd blocks/com.acme.wasm-demo
 cargo build --target wasm32-unknown-unknown --release
 mkdir -p dist
-cp target/wasm32-unknown-unknown/release/acme_wasm_demo.wasm dist/plugin.wasm
+cp target/wasm32-unknown-unknown/release/acme_wasm_demo.wasm dist/block.wasm
 ```
 
 Or run `make wasm-demo` from the repo root once the Makefile target lands.
 
-The host's [`WasmSupervisor::load`](../../crates/extensions-host/src/wasm.rs)
-expects `dist/plugin.wasm` — matches the path declared in
-[plugin.yaml](plugin.yaml).
+The host's [`WasmSupervisor::load`](../../crates/blocks-host/src/wasm.rs)
+expects `dist/block.wasm` — matches the path declared in
+[block.yaml](block.yaml).
 
 ## Why not in the main workspace?
 
 It targets `wasm32-unknown-unknown`; making it a workspace member would
 force the whole workspace onto that target or need per-member target
 gating. Keeping the crate standalone with a path dep into
-`../../crates/extensions-sdk` is the simpler option — you just
+`../../crates/blocks-sdk` is the simpler option — you just
 `cd` in and build.
 
 ## ABI cheat sheet
 
-The plugin exports three symbols (via `export_plugin!`):
+The block exports three symbols (via `export_plugin!`):
 
 - `alloc(size: i32) -> i32` — host allocates scratch in guest memory
 - `describe() -> i64` — returns packed `(ptr << 32) | len` of a JSON

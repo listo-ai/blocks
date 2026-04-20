@@ -1,6 +1,6 @@
-//! `com.acme.hello` — reference plugin showing the full shape.
+//! `com.acme.hello` — reference block showing the full shape.
 //!
-//! Two contributions in one plugin directory:
+//! Two contributions in one block directory:
 //! - **UI**: Module-Federation remote (see `ui/`) mounted in the
 //!   sidebar.
 //! - **Wasm**: one node kind `com.acme.hello.greeter` implemented
@@ -18,7 +18,7 @@
 //! (`{"name": "World"}`) so it reads as an example regardless of how
 //! upstream nodes shape their messages.
 
-use extensions_sdk::wasm::{
+use blocks_sdk::wasm::{
     self, DescribeResponse, KindDecl, OnInputEnvelope, OutputMsg, WasmPlugin,
 };
 use serde::Deserialize;
