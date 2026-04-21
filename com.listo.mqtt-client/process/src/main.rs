@@ -162,6 +162,19 @@ impl NodeBehavior for Publish {
         // Resolve settings honouring msg_overrides declared in the
         // manifest (qos / retain / topic from msg.metadata). Topic also
         // accepts `msg.topic` top-level per Node-RED convention.
+        // Node-RED mqtt-out parity: settings on the node are defaults;
+        // matching fields on the inbound msg override per-message.
+        //
+        //   msg.payload   → bytes to publish (string → UTF-8; other → JSON)
+        //   msg.topic     → topic (top-level on Msg; beats cfg.topic)
+        //   msg.qos       → qos 0/1/2 (flattens into metadata → resolve_settings)
+        //   msg.retain    → retained flag   (same path as qos)
+        //
+        // `msg.qos`/`msg.retain` land in `msg.metadata` thanks to the
+        // flatten-on-deserialize on `spi::Msg`, so the manifest's
+        // `msg_overrides` picks them up. `msg.topic` is separate
+        // because the Msg struct models it as a first-class field, not
+        // an arbitrary metadata key.
         let cfg: PublishConfig = ctx.resolve_settings::<PublishConfig>(&msg)?.into_inner();
         let topic = msg
             .topic
@@ -274,18 +287,22 @@ impl NodeBehavior for Subscribe {
         let parent_for_reg = parent_path.clone();
         let topic_for_reg = topic.clone();
         tokio::spawn(async move {
+            // Always register the filter; the event loop replays all
+            // registered subs to the broker on every `ConnAck` (see
+            // `drive_event_loop`). So if the client isn't up yet, the
+            // subscribe still lands as soon as the session connects —
+            // no second init call needed.
             registry()
-                .register_sub(&parent_for_reg, sub_path, topic_for_reg)
+                .register_sub(&parent_for_reg, sub_path, topic_for_reg, qos)
                 .await;
-            let Some(client) = registry().handle(&parent_for_reg).await else {
-                tracing::warn!(
-                    parent = %parent_for_reg.as_str(),
-                    "sub: parent client not connected — subscribe skipped (will resume when client (re)connects)",
-                );
-                return;
-            };
-            if let Err(e) = client.subscribe(&topic, qos).await {
-                tracing::warn!(%topic, error = %e, "mqtt subscribe failed");
+            // Opportunistic fast path: if the client is already up,
+            // send the subscribe now instead of waiting for the next
+            // ConnAck (which might never come if we connected long ago
+            // and are sitting healthy).
+            if let Some(client) = registry().handle(&parent_for_reg).await {
+                if let Err(e) = client.subscribe(&topic, qos).await {
+                    tracing::warn!(%topic, error = %e, "mqtt subscribe failed");
+                }
             }
         });
         Ok(())
@@ -333,6 +350,7 @@ struct Registry {
 struct SubEntry {
     sub_path: NodePath,
     filter: String,
+    qos: QoS,
 }
 
 struct Session {
@@ -349,13 +367,23 @@ impl Registry {
         }
     }
 
-    async fn register_sub(&self, client_path: &NodePath, sub_path: NodePath, filter: String) {
+    async fn register_sub(
+        &self,
+        client_path: &NodePath,
+        sub_path: NodePath,
+        filter: String,
+        qos: QoS,
+    ) {
         let mut subs = self.subs.lock().await;
         let list = subs.entry(client_path.clone()).or_default();
         // Replace existing entry for this sub_path (on_init re-run after
         // settings change) rather than duplicating.
         list.retain(|e| e.sub_path != sub_path);
-        list.push(SubEntry { sub_path, filter });
+        list.push(SubEntry {
+            sub_path,
+            filter,
+            qos,
+        });
     }
 
     async fn unregister_sub(&self, client_path: &NodePath, sub_path: &NodePath) {
@@ -449,6 +477,17 @@ async fn drive_event_loop(path: NodePath, el: &mut EventLoop) {
             Ok(Event::Incoming(Incoming::ConnAck(_))) => {
                 tracing::info!(node = %path.as_str(), state = "OK", "mqtt connected");
                 publish_client_state(&path, "OK", "connected");
+                // Replay every registered sub filter on (re)connect.
+                // Covers two cases:
+                //   1. A sub node's `on_init` fired before the client's
+                //      async connect completed (boot-time race).
+                //   2. The broker dropped us and rumqttc reconnected —
+                //      MQTT clean_session=true (our default) means the
+                //      broker forgot our subscriptions, so re-send them.
+                let path_for_replay = path.clone();
+                tokio::spawn(async move {
+                    replay_subs(&path_for_replay).await;
+                });
             }
             Ok(Event::Incoming(Incoming::Publish(p))) => {
                 dispatch_publish(&path, &p).await;
@@ -466,6 +505,29 @@ async fn drive_event_loop(path: NodePath, el: &mut EventLoop) {
                 publish_client_state(&path, state, &detail);
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
+        }
+    }
+}
+
+/// Re-send every sub filter registered under this client. Called from
+/// the event loop on each `ConnAck` — the broker's subscription state
+/// is session-scoped, so after any (re)connect we have to restate our
+/// subscriptions. Failures are logged per-filter; one bad topic
+/// mustn't block the rest.
+async fn replay_subs(client_path: &NodePath) {
+    let subs = registry().subs_for(client_path).await;
+    if subs.is_empty() {
+        return;
+    }
+    let Some(client) = registry().handle(client_path).await else {
+        return;
+    };
+    for entry in subs {
+        if let Err(e) = client.subscribe(&entry.filter, entry.qos).await {
+            tracing::warn!(
+                filter = %entry.filter, sub = %entry.sub_path.as_str(), error = %e,
+                "mqtt replay subscribe failed",
+            );
         }
     }
 }

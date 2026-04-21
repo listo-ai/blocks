@@ -24,9 +24,16 @@ facets:
 # client (dev broker + prod broker, etc.).
 containment:
   must_live_under: []
+  # Pub/sub explicitly (containment matching stops at the first rule
+  # that applies to each child kind, so keeping them as named rules is
+  # stable even if their facets change). `isCompute` is the general
+  # bucket — any compute-faceted node (heartbeat, function, pluck, …)
+  # can live under the client so operators build the inbound / outbound
+  # transform chain in the same subtree as the broker connection.
   may_contain:
     - kind: com.listo.mqtt-client.pub
     - kind: com.listo.mqtt-client.sub
+    - facet: isCompute
   cardinality_per_parent: many_per_parent
   cascade: strict
 

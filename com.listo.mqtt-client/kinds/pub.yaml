@@ -1,8 +1,22 @@
-# MQTT publish node — takes a Msg on `in` and publishes it to the
-# configured topic using its parent client's session. Node-RED `mqtt out`
-# semantics: if `msg.topic` / `msg.metadata.qos` / `msg.metadata.retain`
-# are set on the inbound msg, they override the node's settings, so the
-# same pub node can serve many topics driven by upstream logic.
+# MQTT publish node — Node-RED `mqtt out` parity.
+#
+# The node has one input (`in`) that accepts a standard Node-RED msg.
+# Settings on the node are DEFAULTS; matching fields on the inbound msg
+# override them per-message:
+#
+#   msg.payload  →  bytes to publish (string → UTF-8; otherwise JSON-encoded)
+#   msg.topic    →  topic            (overrides `topic` setting)
+#   msg.qos      →  qos 0 / 1 / 2    (overrides `qos` setting)
+#   msg.retain   →  retained flag    (overrides `retain` setting)
+#
+# If both `topic` setting and `msg.topic` are empty, the publish is
+# rejected and the error surfaces on the `out` stats port — matching
+# Node-RED's "no topic" failure mode.
+#
+# `out` carries a stats envelope after each publish attempt:
+# `{ success, topic, qos, retain, bytes, error? }`. Downstream nodes
+# chain on it for logging, retry, or dashboard counters — same shape
+# as Node-RED's "mqtt out with status feedback" pattern.
 #
 # `must_live_under` enforces the client-scope: a pub node placed at the
 # flow root (or anywhere other than under a client) is rejected at
@@ -24,13 +38,9 @@ containment:
 slots:
   - name: in
     role: input
-    value_kind: string
+    value_kind: json
     trigger: true
 
-  # `out` carries a stats envelope after each publish attempt:
-  # `{ success, topic, qos, retain, bytes, error? }`. Downstream nodes
-  # chain on it for logging, retry, or dashboard counters — same shape
-  # as Node-RED's "mqtt out with status feedback" pattern.
   - name: out
     role: output
     value_kind: json
@@ -54,21 +64,25 @@ settings_schema:
       title: Topic
       description: >-
         Default MQTT topic to publish to. Left blank if the topic is
-        supplied on each message via `msg.topic`.
+        supplied on each message via `msg.topic` — matches Node-RED
+        `mqtt out` behaviour.
     qos:
       type: integer
       title: QoS
       default: 0
       enum: [0, 1, 2]
+      description: Default QoS; `msg.qos` on the inbound msg overrides.
     retain:
       type: boolean
       title: Retained
       default: false
+      description: Default retain flag; `msg.retain` on the inbound msg overrides.
 
-# Node-RED-style per-message overrides. `msg.metadata.<key>` wins over
-# persisted settings. `msg.topic` (top-level) is also honoured by the
-# behaviour — handled in code because it lives outside `metadata`.
+# Per-message overrides. `msg.qos` / `msg.retain` flatten into
+# `msg.metadata` at deserialize time (see `spi::Msg`) so the engine's
+# settings resolver picks them up here. `msg.topic` is *not* routed
+# through this table because it's a first-class field on the `Msg`
+# envelope, not a metadata key — the behaviour reads it directly.
 msg_overrides:
-  topic: topic
   qos: qos
   retain: retain
