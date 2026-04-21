@@ -19,7 +19,7 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-blocks-sdk = { path = "../../crates/blocks-sdk", default-features = false, features = ["wasm"] }
+blocks-sdk = { path = "../../../../listo-repos/agent-sdk/blocks-sdk", package = "listo-blocks-sdk", default-features = false, features = ["wasm"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
