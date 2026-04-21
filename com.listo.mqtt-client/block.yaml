@@ -1,0 +1,29 @@
+id: com.listo.mqtt-client
+version: 0.1.0
+display_name: "MQTT Client"
+description: >-
+  MQTT connectivity: a client node holds the session; pub and sub
+  nodes live under it and share the connection.
+
+contributes:
+  ui:
+    entry: ui/remoteEntry.js
+    exposes:
+      - name: Panel
+        module: "./Panel"
+        contributes_to: sidebar
+
+  # Native process-block binary produced by process/.
+  process_bin:
+    path: dist/process
+
+  # Kind manifests registered with the graph at scan time. Containment
+  # is declared inside each manifest (pub/sub must live under a client).
+  kinds:
+    - kinds/client.yaml
+    - kinds/pub.yaml
+    - kinds/sub.yaml
+
+requires:
+  - id: spi.msg
+    version: "^1"

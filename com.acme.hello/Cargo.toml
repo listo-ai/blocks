@@ -29,3 +29,12 @@ opt-level = "s"
 lto = true
 codegen-units = 1
 strip = true
+
+# ---------------------------------------------------------------------------
+# Local-dev overrides — ignored by `cargo publish` / downstream consumers.
+[patch."https://github.com/listo-ai/agent-sdk"]
+listo-blocks-sdk = { path = "../../agent-sdk/blocks-sdk" }
+listo-blocks-sdk-macros = { path = "../../agent-sdk/blocks-sdk-macros" }
+
+[patch."https://github.com/listo-ai/contracts"]
+listo-spi = { path = "../../contracts/spi" }

@@ -9,9 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@listo/block-ui-sdk": "workspace:*",
-    "@listo/ui-core": "workspace:*",
-    "@listo/ui-kit": "workspace:*"
+    "@listo/block-ui-sdk": "workspace:*"
   },
   "devDependencies": {
     "@module-federation/enhanced": "^0.6.16",

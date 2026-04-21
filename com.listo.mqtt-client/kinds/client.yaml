@@ -1,0 +1,70 @@
+# MQTT client — holds the connection settings for a broker and owns the
+# long-lived MQTT session. Pub and Sub nodes must live under a client
+# and share its connection.
+#
+# Connection is opened at `on_init` (or when settings change) and torn
+# down when the node is deleted.
+#
+# `isIdentity` gives the client node a clear "this is a configuration
+# entity" signal in the palette and under containment queries.
+
+id: com.listo.mqtt-client.client
+display_name: MQTT Client
+
+facets:
+  # `isCompute` — the flow kind's `may_contain` admits any compute-faceted
+  # child, so this lets a client live directly under `sys.core.flow`.
+  # `isIdentity` — signals "this is a config entity" for palette grouping
+  # and for containment queries from child pub/sub nodes.
+  - isCompute
+  - isIdentity
+
+# A client is a container: pub and sub nodes live under it and reuse
+# its connection. `many_per_parent` lets a flow hold more than one
+# client (dev broker + prod broker, etc.).
+containment:
+  must_live_under: []
+  may_contain:
+    - kind: com.listo.mqtt-client.pub
+    - kind: com.listo.mqtt-client.sub
+  cardinality_per_parent: many_per_parent
+  cascade: strict
+
+# No trigger inputs — the client is passive. It just holds the
+# connection the pub/sub children use.
+slots: []
+
+settings_schema:
+  type: object
+  properties:
+    host:
+      type: string
+      title: Broker host
+      default: localhost
+    port:
+      type: integer
+      title: Broker port
+      default: 1883
+      minimum: 1
+      maximum: 65535
+    client_id:
+      type: string
+      title: MQTT client id
+      description: >-
+        Uniquely identifies this connection to the broker. Defaults to the
+        node path if empty.
+    username:
+      type: string
+      title: Username
+    password:
+      type: string
+      title: Password
+      # Rendered as a password input by the settings form.
+    keep_alive_secs:
+      type: integer
+      title: Keep-alive (seconds)
+      default: 60
+      minimum: 5
+  required:
+    - host
+    - port

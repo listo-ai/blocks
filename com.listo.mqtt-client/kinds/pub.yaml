@@ -1,0 +1,44 @@
+# MQTT publish node — takes a Msg on `in` and publishes it to the
+# configured topic using its parent client's session.
+#
+# `must_live_under` enforces the client-scope: a pub node placed at the
+# flow root (or anywhere other than under a client) is rejected at
+# create time with a placement error.
+
+id: com.listo.mqtt-client.pub
+display_name: MQTT Publish
+
+facets:
+  - isCompute
+
+containment:
+  must_live_under:
+    - kind: com.listo.mqtt-client.client
+  may_contain: []
+  cardinality_per_parent: many_per_parent
+  cascade: strict
+
+slots:
+  - name: in
+    role: input
+    value_kind: string
+    trigger: true
+
+settings_schema:
+  type: object
+  properties:
+    topic:
+      type: string
+      title: Topic
+      description: MQTT topic to publish to (supports `/` separators).
+    qos:
+      type: integer
+      title: QoS
+      default: 0
+      enum: [0, 1, 2]
+    retain:
+      type: boolean
+      title: Retained
+      default: false
+  required:
+    - topic

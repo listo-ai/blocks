@@ -1,0 +1,50 @@
+# com.listo.bacnet — BACnet write node.
+#
+# Writes a value to a single property on the parent device.
+
+id: com.listo.bacnet.write
+display_name: BACnet Write
+
+facets:
+  - isCompute
+
+containment:
+  must_live_under:
+    - kind: com.listo.bacnet.device
+  may_contain: []
+  cardinality_per_parent: many_per_parent
+  cascade: strict
+
+slots:
+  - name: in
+    direction: input
+    description: >-
+      Message whose `payload` is written to the configured property.
+      Numeric payloads are used directly; strings are parsed as JSON.
+
+settings_schema:
+  type: object
+  properties:
+    object_type:
+      type: string
+      title: Object type
+      default: "analog-output"
+    object_instance:
+      type: integer
+      title: Object instance
+      default: 0
+      minimum: 0
+    property:
+      type: string
+      title: Property identifier
+      default: "present-value"
+    priority:
+      type: integer
+      title: Write priority (1–16)
+      default: 16
+      minimum: 1
+      maximum: 16
+  required:
+    - object_type
+    - object_instance
+    - property

@@ -1,0 +1,171 @@
+{
+  "id": "com_listo_mqtt_client",
+  "name": "com_listo_mqtt_client",
+  "metaData": {
+    "name": "com_listo_mqtt_client",
+    "type": "app",
+    "buildInfo": {
+      "buildVersion": "0.1.0",
+      "buildName": "@listo/mqtt-client-block-ui"
+    },
+    "remoteEntry": {
+      "name": "remoteEntry.js",
+      "path": "",
+      "type": "global"
+    },
+    "types": {
+      "path": "",
+      "name": "",
+      "zip": "@mf-types.zip",
+      "api": "@mf-types.d.ts"
+    },
+    "globalName": "com_listo_mqtt_client",
+    "pluginVersion": "0.6.16",
+    "publicPath": "auto",
+    "prefetchInterface": false
+  },
+  "shared": [
+    {
+      "id": "com_listo_mqtt_client:@tanstack/react-query",
+      "name": "@tanstack/react-query",
+      "version": "5.99.2",
+      "singleton": true,
+      "requiredVersion": "^5.99.2",
+      "assets": {
+        "js": {
+          "async": [
+            "static/js/async/lib-react.d9d16fbf.js"
+          ],
+          "sync": [
+            "static/js/async/573.c12ede89.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      }
+    },
+    {
+      "id": "com_listo_mqtt_client:react-dom",
+      "name": "react-dom",
+      "version": "19.2.5",
+      "singleton": true,
+      "requiredVersion": "^19.2.5",
+      "assets": {
+        "js": {
+          "async": [
+            "static/js/async/573.c12ede89.js",
+            "static/js/async/lib-router.e15a1ce2.js",
+            "static/js/async/661.ebe9e6f4.js",
+            "static/js/async/597.0d71018c.js"
+          ],
+          "sync": [
+            "static/js/async/lib-react.d9d16fbf.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      }
+    },
+    {
+      "id": "com_listo_mqtt_client:react-router-dom",
+      "name": "react-router-dom",
+      "version": "7.14.1",
+      "singleton": true,
+      "requiredVersion": "^7.14.1",
+      "assets": {
+        "js": {
+          "async": [
+            "static/js/async/lib-react.d9d16fbf.js"
+          ],
+          "sync": [
+            "static/js/async/lib-router.e15a1ce2.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      }
+    },
+    {
+      "id": "com_listo_mqtt_client:react",
+      "name": "react",
+      "version": "19.2.5",
+      "singleton": true,
+      "requiredVersion": "^19.2.5",
+      "assets": {
+        "js": {
+          "async": [
+            "static/js/async/573.c12ede89.js",
+            "static/js/async/lib-router.e15a1ce2.js",
+            "static/js/async/661.ebe9e6f4.js",
+            "static/js/async/597.0d71018c.js"
+          ],
+          "sync": [
+            "static/js/async/lib-react.d9d16fbf.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      }
+    },
+    {
+      "id": "com_listo_mqtt_client:zustand",
+      "name": "zustand",
+      "version": "5.0.12",
+      "singleton": true,
+      "requiredVersion": "^5.0.12",
+      "assets": {
+        "js": {
+          "async": [
+            "static/js/async/lib-react.d9d16fbf.js"
+          ],
+          "sync": [
+            "static/js/async/597.0d71018c.js",
+            "static/js/async/978.98702640.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      }
+    }
+  ],
+  "remotes": [],
+  "exposes": [
+    {
+      "id": "com_listo_mqtt_client:Panel",
+      "name": "Panel",
+      "assets": {
+        "js": {
+          "sync": [
+            "static/js/async/lib-react.d9d16fbf.js",
+            "static/js/async/84.9afb0987.js",
+            "static/js/async/344.a879a3d0.js",
+            "static/js/async/__federation_expose_Panel.db78a34b.js"
+          ],
+          "async": [
+            "static/js/async/573.c12ede89.js",
+            "static/js/async/lib-router.e15a1ce2.js",
+            "static/js/async/661.ebe9e6f4.js",
+            "static/js/async/597.0d71018c.js"
+          ]
+        },
+        "css": {
+          "sync": [
+            "static/css/async/__federation_expose_Panel.5e7ceb58.css"
+          ],
+          "async": []
+        }
+      },
+      "path": "./Panel"
+    }
+  ]
+}

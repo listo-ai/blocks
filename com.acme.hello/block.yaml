@@ -10,13 +10,27 @@ contributes:
       - name: Panel
         module: "./Panel"
         contributes_to: sidebar
-  # Wasm module produced by this block's Rust crate (see src/lib.rs).
-  # Path is relative to the block dir; build with:
+
+  # Wasm module produced by the root Rust crate (src/lib.rs).
+  # Targets wasm32-unknown-unknown; build with:
   #   cargo build --target wasm32-unknown-unknown --release
   #   cp target/wasm32-unknown-unknown/release/acme_hello.wasm dist/block.wasm
   wasm_modules:
     - path: dist/block.wasm
-  kinds: []
+
+  # Native process-block binary produced by process/.
+  # The supervisor launches this binary, injects the UDS path via
+  # US_PLUGIN_SOCKET, and communicates with it over gRPC.
+  # Build with:
+  #   cd process && cargo build --release
+  #   cp process/target/release/acme-hello-process dist/process
+  process_bin:
+    path: dist/process
+
+  # Kind manifests registered with graph::KindRegistry at block-scan time.
+  # These populate the Studio palette. Paths are relative to the block root.
+  kinds:
+    - kinds/greeter.yaml
 
 requires:
   - id: spi.msg

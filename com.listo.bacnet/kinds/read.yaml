@@ -1,0 +1,48 @@
+# com.listo.bacnet — BACnet read node.
+#
+# Reads a single property from the parent device. Triggered by an
+# inbound message; the property value is emitted on `out`.
+
+id: com.listo.bacnet.read
+display_name: BACnet Read
+
+facets:
+  - isCompute
+
+containment:
+  must_live_under:
+    - kind: com.listo.bacnet.device
+  may_contain: []
+  cardinality_per_parent: many_per_parent
+  cascade: strict
+
+slots:
+  - name: in
+    direction: input
+    description: Trigger — payload is ignored; the configured property is read.
+  - name: out
+    direction: output
+    description: The property value returned by the device.
+
+settings_schema:
+  type: object
+  properties:
+    object_type:
+      type: string
+      title: Object type
+      description: "e.g. analog-input, binary-output, multi-state-value"
+      default: "analog-input"
+    object_instance:
+      type: integer
+      title: Object instance
+      default: 0
+      minimum: 0
+    property:
+      type: string
+      title: Property identifier
+      description: "e.g. present-value, object-name, units"
+      default: "present-value"
+  required:
+    - object_type
+    - object_instance
+    - property

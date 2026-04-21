@@ -1,0 +1,48 @@
+# Process-block binary for `com.acme.hello`.
+#
+# Compiled to a *native* binary (not Wasm) that the supervisor launches
+# as a child process.  It communicates over a Unix-domain socket whose
+# path is injected by the supervisor via `US_PLUGIN_SOCKET`.
+#
+# Build:
+#   cargo build --release
+#   mkdir -p dist
+#   cp target/release/acme-hello-process dist/process
+#
+# Because `wasm` and `process` features of `blocks-sdk` are mutually
+# exclusive this lives as a *separate* crate next to the Wasm sibling
+# at the block root.
+[package]
+name = "acme-hello-process"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "acme-hello-process"
+path = "src/main.rs"
+
+[dependencies]
+blocks-sdk = { git = "https://github.com/listo-ai/agent-sdk", branch = "main", package = "listo-blocks-sdk", default-features = false, features = ["process"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+# ---------------------------------------------------------------------------
+# Local-dev overrides — ignored by `cargo publish` / downstream consumers.
+# Redirects the git URLs above to the sibling checkouts in ~/code/workspace.
+[patch."https://github.com/listo-ai/agent-sdk"]
+listo-blocks-sdk = { path = "../../../agent-sdk/blocks-sdk" }
+listo-blocks-sdk-macros = { path = "../../../agent-sdk/blocks-sdk-macros" }
+
+[patch."https://github.com/listo-ai/contracts"]
+listo-spi = { path = "../../../contracts/spi" }
+
+[patch."https://github.com/listo-ai/agent"]
+transport-grpc = { path = "../../../agent/crates/transport-grpc" }

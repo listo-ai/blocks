@@ -1,0 +1,26 @@
+id: com.listo.bacnet
+version: 0.1.0
+display_name: "BACnet"
+description: >-
+  BACnet/IP connectivity: a device node holds the connection; read and write
+  nodes live under it and share the session.
+
+contributes:
+  ui:
+    entry: ui/remoteEntry.js
+    exposes:
+      - name: Panel
+        module: "./Panel"
+        contributes_to: sidebar
+
+  process_bin:
+    path: dist/process
+
+  kinds:
+    - kinds/device.yaml
+    - kinds/read.yaml
+    - kinds/write.yaml
+
+requires:
+  - id: spi.msg
+    version: "^1"

@@ -1,0 +1,27 @@
+# Kind manifest for com.acme.hello.greeter
+# Single source of truth: compile-time via #[derive(NodeKind)] in
+# process/src/main.rs AND runtime via block.yaml:contributes.kinds.
+
+id: com.acme.hello.greeter
+display_name: Greeter
+
+# `isCompute` lets this node live under `sys.core.flow` (the flow kind's
+# `may_contain` admits any facet=isCompute child). Without this facet,
+# placement inside a flow is refused.
+facets:
+  - isCompute
+
+# Free leaf: holds no children.
+containment: {}
+
+slots:
+  # Input: the name to greet. Triggers on_message.
+  - name: in
+    role: input
+    value_kind: string
+    trigger: true
+
+  # Output: the formatted greeting.
+  - name: out
+    role: output
+    value_kind: string

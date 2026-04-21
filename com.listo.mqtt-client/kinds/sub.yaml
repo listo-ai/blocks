@@ -1,0 +1,41 @@
+# MQTT subscribe node — subscribes to a topic on the parent client's
+# session and emits each inbound message on the `out` port.
+#
+# NOTE: server-initiated emits (block pushing a message up to the
+# engine when MQTT delivers) require the streaming-emit RPC; see
+# `agent-sdk/blocks-sdk/src/process.rs` for the deferred wiring. This
+# kind's manifest is final, but `on_message` runtime emits are wired
+# once that RPC lands.
+
+id: com.listo.mqtt-client.sub
+display_name: MQTT Subscribe
+
+facets:
+  - isCompute
+
+containment:
+  must_live_under:
+    - kind: com.listo.mqtt-client.client
+  may_contain: []
+  cardinality_per_parent: many_per_parent
+  cascade: strict
+
+slots:
+  - name: out
+    role: output
+    value_kind: string
+
+settings_schema:
+  type: object
+  properties:
+    topic:
+      type: string
+      title: Topic
+      description: Subscription filter (supports MQTT `+` and `#` wildcards).
+    qos:
+      type: integer
+      title: QoS
+      default: 0
+      enum: [0, 1, 2]
+  required:
+    - topic

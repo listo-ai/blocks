@@ -6,7 +6,7 @@
     "type": "app",
     "buildInfo": {
       "buildVersion": "0.1.0",
-      "buildName": "@acme/plugin-hello"
+      "buildName": "@acme/hello-block-ui"
     },
     "remoteEntry": {
       "name": "remoteEntry.js",
@@ -26,6 +26,27 @@
   },
   "shared": [
     {
+      "id": "com_acme_hello:@tanstack/react-query",
+      "name": "@tanstack/react-query",
+      "version": "5.99.2",
+      "singleton": true,
+      "requiredVersion": "^5.99.2",
+      "assets": {
+        "js": {
+          "async": [
+            "static/js/async/lib-react.ab41e7d8.js"
+          ],
+          "sync": [
+            "static/js/async/573.34e70d61.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      }
+    },
+    {
       "id": "com_acme_hello:react-dom",
       "name": "react-dom",
       "version": "19.2.5",
@@ -34,10 +55,34 @@
       "assets": {
         "js": {
           "async": [
-            "static/js/async/316.60988eff.js"
+            "static/js/async/lib-router.1245591e.js",
+            "static/js/async/661.7490f0d9.js",
+            "static/js/async/597.035bab43.js",
+            "static/js/async/573.34e70d61.js"
           ],
           "sync": [
-            "static/js/async/lib-react.bd3f887a.js"
+            "static/js/async/lib-react.ab41e7d8.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      }
+    },
+    {
+      "id": "com_acme_hello:react-router-dom",
+      "name": "react-router-dom",
+      "version": "7.14.1",
+      "singleton": true,
+      "requiredVersion": "^7.14.1",
+      "assets": {
+        "js": {
+          "async": [
+            "static/js/async/lib-react.ab41e7d8.js"
+          ],
+          "sync": [
+            "static/js/async/lib-router.1245591e.js"
           ]
         },
         "css": {
@@ -55,10 +100,13 @@
       "assets": {
         "js": {
           "async": [
-            "static/js/async/316.60988eff.js"
+            "static/js/async/lib-router.1245591e.js",
+            "static/js/async/661.7490f0d9.js",
+            "static/js/async/597.035bab43.js",
+            "static/js/async/573.34e70d61.js"
           ],
           "sync": [
-            "static/js/async/lib-react.bd3f887a.js"
+            "static/js/async/lib-react.ab41e7d8.js"
           ]
         },
         "css": {
@@ -76,11 +124,11 @@
       "assets": {
         "js": {
           "async": [
-            "static/js/async/lib-react.bd3f887a.js"
+            "static/js/async/lib-react.ab41e7d8.js"
           ],
           "sync": [
-            "static/js/async/316.60988eff.js",
-            "static/js/async/935.0a8c7314.js"
+            "static/js/async/597.035bab43.js",
+            "static/js/async/978.370001da.js"
           ]
         },
         "css": {
@@ -98,16 +146,22 @@
       "assets": {
         "js": {
           "sync": [
-            "static/js/async/lib-react.bd3f887a.js",
-            "static/js/async/341.5c6cae1f.js",
-            "static/js/async/__federation_expose_Panel.883569d3.js"
+            "static/js/async/lib-react.ab41e7d8.js",
+            "static/js/async/505.3400036b.js",
+            "static/js/async/441.06271371.js",
+            "static/js/async/__federation_expose_Panel.68450afb.js"
           ],
           "async": [
-            "static/js/async/316.60988eff.js"
+            "static/js/async/lib-router.1245591e.js",
+            "static/js/async/661.7490f0d9.js",
+            "static/js/async/597.035bab43.js",
+            "static/js/async/573.34e70d61.js"
           ]
         },
         "css": {
-          "sync": [],
+          "sync": [
+            "static/css/async/__federation_expose_Panel.5e7ceb58.css"
+          ],
           "async": []
         }
       },

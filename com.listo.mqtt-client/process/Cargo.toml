@@ -1,0 +1,44 @@
+# Process-block binary for `com.listo.mqtt-client`.
+#
+# Native Rust — full Tokio + a real MQTT client (rumqttc). The
+# `blocks-sdk` crate's `process` feature serves the Extension gRPC
+# surface; we implement three `NodeBehavior` impls (client / pub /
+# sub) and register them at startup.
+
+[package]
+name = "listo-mqtt-client"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "listo-mqtt-client"
+path = "src/main.rs"
+
+[dependencies]
+blocks-sdk = { git = "https://github.com/listo-ai/agent-sdk", branch = "main", package = "listo-blocks-sdk", default-features = false, features = ["process"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync"] }
+rumqttc = { version = "0.24" }
+thiserror = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+# ---------------------------------------------------------------------------
+# Local-dev overrides — ignored by `cargo publish` / downstream consumers.
+[patch."https://github.com/listo-ai/agent-sdk"]
+listo-blocks-sdk = { path = "../../../agent-sdk/blocks-sdk" }
+listo-blocks-sdk-macros = { path = "../../../agent-sdk/blocks-sdk-macros" }
+
+[patch."https://github.com/listo-ai/contracts"]
+listo-spi = { path = "../../../contracts/spi" }
+
+[patch."https://github.com/listo-ai/agent"]
+transport-grpc = { path = "../../../agent/crates/transport-grpc" }

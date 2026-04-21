@@ -1,0 +1,12 @@
+/**
+ * Tailwind entry for the block UI.
+ *
+ * The Studio host already compiles the full design-system tokens —
+ * blocks must NOT import their own tailwindcss runtime.
+ * This file is only used in the standalone dev harness (`pnpm dev`).
+ */
+@import "tailwindcss";
+
+@source "../../../ui-kit/src";
+@source "../../../ui-core/src";
+@source "../../../block-ui-sdk/src";

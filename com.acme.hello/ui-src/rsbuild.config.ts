@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "@rsbuild/core";
 import { pluginReact } from "@rsbuild/plugin-react";
-import { MF_SHARED_SINGLETONS } from "@listo/ui-core/mf";
+import { MF_SHARED_SINGLETONS } from "@listo/block-ui-sdk/mf";
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -18,6 +18,11 @@ export default defineConfig({
   output: {
     // Build into ../ui/ so block.yaml's `entry: ui/remoteEntry.js` keeps working.
     distPath: { root: "../ui" },
+    // `auto` tells the MF runtime to resolve chunk URLs relative to where
+    // `remoteEntry.js` actually loaded from. Without this the manifest bakes
+    // in `publicPath: "/"`, so Studio (the host) then fetches the block's
+    // chunks from Studio's own origin — 404s into its SPA fallback.
+    assetPrefix: "auto",
   },
 
   tools: {

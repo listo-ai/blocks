@@ -1,0 +1,50 @@
+# com.listo.bacnet — BACnet/IP device node.
+#
+# Holds the connection settings for a remote BACnet device. Read and
+# Write nodes must live under a device and share its session.
+
+id: com.listo.bacnet.device
+display_name: BACnet Device
+
+facets:
+  - isCompute
+  - isIdentity
+
+containment:
+  must_live_under: []
+  may_contain:
+    - kind: com.listo.bacnet.read
+    - kind: com.listo.bacnet.write
+  cardinality_per_parent: many_per_parent
+  cascade: strict
+
+slots: []
+
+settings_schema:
+  type: object
+  properties:
+    host:
+      type: string
+      title: Device host / IP
+      default: "192.168.1.1"
+    port:
+      type: integer
+      title: BACnet/IP port
+      default: 47808
+      minimum: 1
+      maximum: 65535
+    device_id:
+      type: integer
+      title: BACnet device instance
+      description: >-
+        The numeric BACnet device instance identifier for the remote device.
+      default: 0
+    timeout_ms:
+      type: integer
+      title: Request timeout (ms)
+      default: 3000
+      minimum: 100
+  required:
+    - host
+    - port
+    - device_id
