@@ -355,8 +355,25 @@ struct SubEntry {
 
 struct Session {
     client: AsyncClient,
-    /// The event-loop task. Dropped on disconnect, stopping the loop.
-    _task: tokio::task::JoinHandle<()>,
+    /// Handle for the event-loop task. We call `abort()` on it
+    /// explicitly when replacing the session — dropping a tokio
+    /// `JoinHandle` *detaches* the task rather than cancelling it, so
+    /// without this the old event loop keeps polling its socket and
+    /// reconnecting with the same `client_id`, fighting the new
+    /// session and producing the kick-loop we saw in prod.
+    task: tokio::task::JoinHandle<()>,
+}
+
+impl Session {
+    /// Stop the MQTT session cleanly: send a DISCONNECT packet so the
+    /// broker frees the client-id slot immediately, then abort the
+    /// event-loop task. Both steps are best-effort — a dead socket is
+    /// already "disconnected" from the broker's POV, and an aborted
+    /// task is dropped right after.
+    async fn shutdown(self) {
+        let _ = self.client.disconnect().await;
+        self.task.abort();
+    }
 }
 
 impl Registry {
@@ -425,19 +442,27 @@ impl Registry {
             drive_event_loop(path_for_task, &mut event_loop).await;
         });
 
-        let mut sessions = self.sessions.lock().await;
-        sessions.insert(
-            path,
-            Session {
-                client,
-                _task: task,
-            },
-        );
+        // Take the old session out of the map UNDER the lock, then
+        // release the lock before calling `shutdown().await` — the
+        // disconnect-send is a point of async work we don't want
+        // holding the Mutex while every other caller waits.
+        let previous = {
+            let mut sessions = self.sessions.lock().await;
+            sessions.insert(path.clone(), Session { client, task })
+        };
+        if let Some(old) = previous {
+            old.shutdown().await;
+        }
     }
 
     async fn disconnect(&self, path: &NodePath) {
-        let mut sessions = self.sessions.lock().await;
-        sessions.remove(path);
+        let previous = {
+            let mut sessions = self.sessions.lock().await;
+            sessions.remove(path)
+        };
+        if let Some(old) = previous {
+            old.shutdown().await;
+        }
     }
 
     async fn handle(&self, path: &NodePath) -> Option<ClientHandle> {
