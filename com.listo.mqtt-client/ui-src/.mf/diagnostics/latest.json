@@ -1,0 +1,10 @@
+{
+  "latestErrorEvent": {
+    "code": "TYPE-001",
+    "message": "Failed to generate type declaration. Execute the below cmd to reproduce and fix the error. #TYPE-001\nargs: {\"cmd\":\"npx tsc --project /home/user/code/workspace/blocks/com.listo.mqtt-client/ui-src/node_modules/.federation/tsconfig.5cd643ab8da7c1c62c9a2d7938397c4e.json\"}\nView the docs to see how to solve: https://module-federation.io/guide/troubleshooting/type#type-001",
+    "args": {
+      "cmd": "npx tsc --project /home/user/code/workspace/blocks/com.listo.mqtt-client/ui-src/node_modules/.federation/tsconfig.5cd643ab8da7c1c62c9a2d7938397c4e.json"
+    },
+    "timestamp": 1776774140185
+  }
+}

@@ -30,9 +30,18 @@ containment:
   cardinality_per_parent: many_per_parent
   cascade: strict
 
-# No trigger inputs — the client is passive. It just holds the
-# connection the pub/sub children use.
-slots: []
+# Connection-health surface. `state` is the PLC-style indicator
+# (OK / WARNING / ERROR / CONNECTING / OFF) the Studio reads to drive
+# the node's status dot. `detail` carries the latest event message
+# (broker ack reason, socket error text) for operator diagnosis.
+slots:
+  - name: state
+    role: status
+    value_kind: string
+  - name: detail
+    role: status
+    value_kind: string
+    is_internal: true
 
 settings_schema:
   type: object

@@ -1,37 +1,20 @@
 import { createRequire } from "node:module";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { defineConfig } from "@rsbuild/core";
 import { pluginReact } from "@rsbuild/plugin-react";
-import { MF_SHARED_SINGLETONS } from "@listo/block-ui-sdk/mf";
+import { createSharedSingletons } from "@listo/block-ui-sdk/mf";
 
 const require = createRequire(import.meta.url);
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-function requireEnv(name: string): string {
-  const v = process.env[name];
-  if (!v) {
-    throw new Error(
-      `${name} is required to build this block — set it at build time, e.g.\n` +
-        `  PUBLIC_AGENT_URL=http://localhost:8082 pnpm build`,
-    );
-  }
-  return v;
-}
+// Block UI does NOT bake in `PUBLIC_AGENT_URL`. `@listo/ui-core` is a
+// Module Federation shared singleton — at runtime the block panel
+// consumes Studio's ui-core instance, which was built with the correct
+// URL. A block standalone (no host) is not a supported mode.
 
 export default defineConfig({
   plugins: [pluginReact()],
 
   source: {
     entry: { index: "./src/index.ts" },
-    // `PUBLIC_AGENT_URL` is the agent the block's bundled AgentClient
-    // connects to. Required — set it explicitly at build time; fail
-    // loudly otherwise, don't silently default.
-    define: {
-      "import.meta.env.PUBLIC_AGENT_URL": JSON.stringify(
-        requireEnv("PUBLIC_AGENT_URL"),
-      ),
-    },
   },
 
   output: {
@@ -63,13 +46,15 @@ export default defineConfig({
             // The only surface block authors need to know about.
             "./Panel": "./src/Panel.tsx",
           },
-          // Shared singletons — same list as the Studio host so React,
-          // zustand, react-query etc. are never duplicated at runtime.
-          shared: MF_SHARED_SINGLETONS,
-          dts: {
-            generateTypes: { tsConfigPath: "./tsconfig.json" },
-            outputDir: "../ui",
-          },
+          // Identical to Studio's host config so React, zustand,
+          // react-query AND @listo/ui-core/ui-kit/etc. are never
+          // duplicated at runtime. The factory resolves each workspace
+          // package's real semver from its own package.json — MF never
+          // sees a `workspace:*` specifier.
+          shared: createSharedSingletons(),
+          // Monorepo — types flow via workspace:* links; MF DTS zip
+          // fetching is unused. See studio/rsbuild.config.ts for why.
+          dts: false,
         }),
       );
     },

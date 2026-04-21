@@ -1,0 +1,42 @@
+{
+  "network": {
+    "local_bind": "192.168.15.15:0",
+    "broadcast_addr": "192.168.15.255:47808",
+    "whois_wait_ms": 5000,
+    "request_timeout_ms": 5000,
+    "interface": "eno1"
+  },
+  "devices": [
+    {
+      "name": "device-a",
+      "address": "192.168.15.50",
+      "port": 47808,
+      "device_id": 12345,
+      "reads": [
+        {
+          "object_type": "device",
+          "object_instance": 12345,
+          "properties": ["object-name", "model-name", "vendor-name", "firmware-revision"]
+        },
+        {
+          "object_type": "analog-input",
+          "object_instance": 0,
+          "properties": ["object-name", "present-value", "units", "status-flags"]
+        }
+      ]
+    },
+    {
+      "name": "device-b",
+      "address": "192.168.15.60",
+      "port": 47808,
+      "device_id": 23456,
+      "reads": [
+        {
+          "object_type": "device",
+          "object_instance": 23456,
+          "properties": ["object-name", "model-name", "vendor-name"]
+        }
+      ]
+    }
+  ]
+}

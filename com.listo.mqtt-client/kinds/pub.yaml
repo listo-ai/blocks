@@ -1,5 +1,8 @@
 # MQTT publish node — takes a Msg on `in` and publishes it to the
-# configured topic using its parent client's session.
+# configured topic using its parent client's session. Node-RED `mqtt out`
+# semantics: if `msg.topic` / `msg.metadata.qos` / `msg.metadata.retain`
+# are set on the inbound msg, they override the node's settings, so the
+# same pub node can serve many topics driven by upstream logic.
 #
 # `must_live_under` enforces the client-scope: a pub node placed at the
 # flow root (or anywhere other than under a client) is rejected at
@@ -24,13 +27,34 @@ slots:
     value_kind: string
     trigger: true
 
+  # `out` carries a stats envelope after each publish attempt:
+  # `{ success, topic, qos, retain, bytes, error? }`. Downstream nodes
+  # chain on it for logging, retry, or dashboard counters — same shape
+  # as Node-RED's "mqtt out with status feedback" pattern.
+  - name: out
+    role: output
+    value_kind: json
+
+  # Running tallies surface on the node card.
+  - name: publish_count
+    role: status
+    value_kind: number
+  - name: error_count
+    role: status
+    value_kind: number
+  - name: last_topic
+    role: status
+    value_kind: string
+
 settings_schema:
   type: object
   properties:
     topic:
       type: string
       title: Topic
-      description: MQTT topic to publish to (supports `/` separators).
+      description: >-
+        Default MQTT topic to publish to. Left blank if the topic is
+        supplied on each message via `msg.topic`.
     qos:
       type: integer
       title: QoS
@@ -40,5 +64,11 @@ settings_schema:
       type: boolean
       title: Retained
       default: false
-  required:
-    - topic
+
+# Node-RED-style per-message overrides. `msg.metadata.<key>` wins over
+# persisted settings. `msg.topic` (top-level) is also honoured by the
+# behaviour — handled in code because it lives outside `metadata`.
+msg_overrides:
+  topic: topic
+  qos: qos
+  retain: retain

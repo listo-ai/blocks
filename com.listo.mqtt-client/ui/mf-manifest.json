@@ -16,13 +16,13 @@
     "types": {
       "path": "",
       "name": "",
-      "zip": "@mf-types.zip",
-      "api": "@mf-types.d.ts"
+      "zip": "",
+      "api": ""
     },
     "globalName": "com_listo_mqtt_client",
-    "pluginVersion": "0.6.16",
-    "publicPath": "auto",
-    "prefetchInterface": false
+    "pluginVersion": "2.3.3",
+    "prefetchInterface": false,
+    "publicPath": "auto"
   },
   "shared": [
     {
@@ -30,118 +30,91 @@
       "name": "@listo/agent-client",
       "version": "0.1.0",
       "singleton": true,
-      "requiredVersion": "^undefined",
+      "requiredVersion": "0.1.0",
       "assets": {
         "js": {
           "async": [],
           "sync": [
-            "static/js/async/800.7edba1ec.js"
+            "static/js/async/800.a3a65e35.js"
           ]
         },
         "css": {
           "async": [],
           "sync": []
         }
-      }
+      },
+      "fallback": ""
     },
     {
       "id": "com_listo_mqtt_client:@listo/block-ui-sdk",
       "name": "@listo/block-ui-sdk",
       "version": "0.1.0",
       "singleton": true,
-      "requiredVersion": "^undefined",
+      "requiredVersion": "0.1.0",
       "assets": {
         "js": {
-          "async": [
-            "static/js/async/573.c12ede89.js",
-            "static/js/async/668.d1afe766.js",
-            "static/js/async/423.b4af43ad.js",
-            "static/js/async/689.811b9214.js",
-            "static/js/async/27.93cf3675.js",
-            "static/js/async/800.7edba1ec.js",
-            "static/js/async/lib-router.e15a1ce2.js",
-            "static/js/async/661.ebe9e6f4.js",
-            "static/js/async/597.0d71018c.js",
-            "static/js/async/82.fa7f18c0.js",
-            "static/js/async/950.669b08ce.js",
-            "static/js/async/lib-react.d9d16fbf.js"
-          ],
+          "async": [],
           "sync": [
-            "static/js/async/361.ee82f434.js",
-            "static/js/async/742.2728fca2.js"
-          ]
-        },
-        "css": {
-          "async": [
-            "static/css/async/384.5e7ceb58.css"
-          ],
-          "sync": []
-        }
-      }
-    },
-    {
-      "id": "com_listo_mqtt_client:@listo/ui-core",
-      "name": "@listo/ui-core",
-      "version": "0.1.0",
-      "singleton": true,
-      "requiredVersion": "^undefined",
-      "assets": {
-        "js": {
-          "async": [
-            "static/js/async/lib-react.d9d16fbf.js",
-            "static/js/async/573.c12ede89.js",
-            "static/js/async/27.93cf3675.js",
-            "static/js/async/800.7edba1ec.js",
-            "static/js/async/lib-router.e15a1ce2.js",
-            "static/js/async/661.ebe9e6f4.js",
-            "static/js/async/597.0d71018c.js",
-            "static/js/async/82.fa7f18c0.js",
-            "static/js/async/950.669b08ce.js"
-          ],
-          "sync": [
-            "static/js/async/689.811b9214.js"
-          ]
-        },
-        "css": {
-          "async": [
-            "static/css/async/384.5e7ceb58.css"
-          ],
-          "sync": []
-        }
-      }
-    },
-    {
-      "id": "com_listo_mqtt_client:@listo/ui-kit",
-      "name": "@listo/ui-kit",
-      "version": "0.1.0",
-      "singleton": true,
-      "requiredVersion": "^undefined",
-      "assets": {
-        "js": {
-          "async": [
-            "static/js/async/lib-react.d9d16fbf.js"
-          ],
-          "sync": [
-            "static/js/async/950.669b08ce.js"
+            "static/js/async/361.e9830868.js",
+            "static/js/async/742.9a83cce9.js"
           ]
         },
         "css": {
           "async": [],
           "sync": []
         }
-      }
+      },
+      "fallback": ""
+    },
+    {
+      "id": "com_listo_mqtt_client:@listo/ui-core",
+      "name": "@listo/ui-core",
+      "version": "0.1.0",
+      "singleton": true,
+      "requiredVersion": "0.1.0",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "static/js/async/689.3396b1ac.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "fallback": ""
+    },
+    {
+      "id": "com_listo_mqtt_client:@listo/ui-kit",
+      "name": "@listo/ui-kit",
+      "version": "0.1.0",
+      "singleton": true,
+      "requiredVersion": "0.1.0",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "static/js/async/950.633f469a.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "fallback": ""
     },
     {
       "id": "com_listo_mqtt_client:@tanstack/react-query",
       "name": "@tanstack/react-query",
       "version": "5.99.2",
       "singleton": true,
-      "requiredVersion": "^5.99.2",
+      "requiredVersion": "^5.40.0",
       "assets": {
         "js": {
-          "async": [
-            "static/js/async/lib-react.d9d16fbf.js"
-          ],
+          "async": [],
           "sync": [
             "static/js/async/573.c12ede89.js"
           ]
@@ -150,53 +123,38 @@
           "async": [],
           "sync": []
         }
-      }
+      },
+      "fallback": ""
     },
     {
       "id": "com_listo_mqtt_client:react-dom",
       "name": "react-dom",
       "version": "19.2.5",
       "singleton": true,
-      "requiredVersion": "^19.2.5",
+      "requiredVersion": "^19.0.0",
       "assets": {
         "js": {
-          "async": [
-            "static/js/async/573.c12ede89.js",
-            "static/js/async/742.2728fca2.js",
-            "static/js/async/668.d1afe766.js",
-            "static/js/async/423.b4af43ad.js",
-            "static/js/async/689.811b9214.js",
-            "static/js/async/27.93cf3675.js",
-            "static/js/async/800.7edba1ec.js",
-            "static/js/async/lib-router.e15a1ce2.js",
-            "static/js/async/661.ebe9e6f4.js",
-            "static/js/async/597.0d71018c.js",
-            "static/js/async/82.fa7f18c0.js",
-            "static/js/async/950.669b08ce.js"
-          ],
+          "async": [],
           "sync": [
             "static/js/async/lib-react.d9d16fbf.js"
           ]
         },
         "css": {
-          "async": [
-            "static/css/async/384.5e7ceb58.css"
-          ],
+          "async": [],
           "sync": []
         }
-      }
+      },
+      "fallback": ""
     },
     {
       "id": "com_listo_mqtt_client:react-router-dom",
       "name": "react-router-dom",
       "version": "7.14.1",
       "singleton": true,
-      "requiredVersion": "^7.14.1",
+      "requiredVersion": "^7.0.0",
       "assets": {
         "js": {
-          "async": [
-            "static/js/async/lib-react.d9d16fbf.js"
-          ],
+          "async": [],
           "sync": [
             "static/js/async/lib-router.e15a1ce2.js"
           ]
@@ -205,53 +163,38 @@
           "async": [],
           "sync": []
         }
-      }
+      },
+      "fallback": ""
     },
     {
       "id": "com_listo_mqtt_client:react",
       "name": "react",
       "version": "19.2.5",
       "singleton": true,
-      "requiredVersion": "^19.2.5",
+      "requiredVersion": "^19.0.0",
       "assets": {
         "js": {
-          "async": [
-            "static/js/async/573.c12ede89.js",
-            "static/js/async/742.2728fca2.js",
-            "static/js/async/668.d1afe766.js",
-            "static/js/async/423.b4af43ad.js",
-            "static/js/async/689.811b9214.js",
-            "static/js/async/27.93cf3675.js",
-            "static/js/async/800.7edba1ec.js",
-            "static/js/async/lib-router.e15a1ce2.js",
-            "static/js/async/661.ebe9e6f4.js",
-            "static/js/async/597.0d71018c.js",
-            "static/js/async/82.fa7f18c0.js",
-            "static/js/async/950.669b08ce.js"
-          ],
+          "async": [],
           "sync": [
             "static/js/async/lib-react.d9d16fbf.js"
           ]
         },
         "css": {
-          "async": [
-            "static/css/async/384.5e7ceb58.css"
-          ],
+          "async": [],
           "sync": []
         }
-      }
+      },
+      "fallback": ""
     },
     {
       "id": "com_listo_mqtt_client:zustand",
       "name": "zustand",
       "version": "5.0.12",
       "singleton": true,
-      "requiredVersion": "^5.0.12",
+      "requiredVersion": "^5.0.0",
       "assets": {
         "js": {
-          "async": [
-            "static/js/async/lib-react.d9d16fbf.js"
-          ],
+          "async": [],
           "sync": [
             "static/js/async/597.0d71018c.js",
             "static/js/async/978.98702640.js"
@@ -261,7 +204,8 @@
           "async": [],
           "sync": []
         }
-      }
+      },
+      "fallback": ""
     }
   ],
   "remotes": [],
@@ -272,22 +216,14 @@
       "assets": {
         "js": {
           "sync": [
-            "static/js/async/lib-react.d9d16fbf.js",
-            "static/js/async/__federation_expose_Panel.9908c560.js"
+            "static/js/async/__federation_expose_Panel.c1b9f42d.js"
           ],
           "async": [
-            "static/js/async/573.c12ede89.js",
-            "static/js/async/742.2728fca2.js",
             "static/js/async/668.d1afe766.js",
-            "static/js/async/423.b4af43ad.js",
-            "static/js/async/689.811b9214.js",
+            "static/js/async/587.2e6b6642.js",
             "static/js/async/27.93cf3675.js",
-            "static/js/async/800.7edba1ec.js",
-            "static/js/async/lib-router.e15a1ce2.js",
             "static/js/async/661.ebe9e6f4.js",
-            "static/js/async/597.0d71018c.js",
-            "static/js/async/82.fa7f18c0.js",
-            "static/js/async/950.669b08ce.js"
+            "static/js/async/82.880ef9b9.js"
           ]
         },
         "css": {

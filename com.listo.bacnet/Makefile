@@ -20,7 +20,7 @@ DIST        := $(BLOCK_DIR)/dist
 EDGE_URL  := http://localhost:8082
 CLOUD_URL := http://localhost:8081
 
-.PHONY: build ui process edge cloud install-edge install-cloud uninstall run clean reload reload-edge reload-cloud help
+.PHONY: build ui process test-live edge cloud install-edge install-cloud uninstall run clean reload reload-edge reload-cloud help
 
 build: ui process ## Build UI bundle + native process binary
 	@echo "✓ built $(BLOCK_ID) — UI at ui/, process at dist/process"
@@ -44,6 +44,9 @@ $(DIST)/process: process/src/main.rs process/Cargo.toml kinds/*.yaml
 	cd process && cargo build --release
 	mkdir -p $(DIST)
 	cp process/target/release/listo-bacnet $(DIST)/process
+
+test-live: ## Run ignored BACnet live tests (requires process/tests/fixtures/bacnet-device.json)
+	cd process && cargo test --test bacnet_live -- --ignored --nocapture
 
 # -----------------------------------------------------------------------------
 # Stage into an agent's blocks dir

@@ -21,6 +21,7 @@ make edge   # build + stage into edge-blocks + hot-reload
 ```
 make ui       # build UI bundle only
 make process  # build native process binary only
+make test-live # run live BACnet tests against your device
 make reload   # hot-reload without rebuilding
 make clean    # remove all build artefacts
 ```
@@ -37,3 +38,35 @@ The `bacnet-rs` client API is at 0.3 and under active development. The
 `read_property` / `write_property` implementations in `main.rs` are currently
 stubs that log the request. Wire in the full `bacnet-rs` request/response
 cycle once the upstream API stabilises.
+
+## Live BACnet Tests
+
+The process crate now includes ignored integration tests for a real BACnet/IP
+device:
+
+- `who_is_discovers_configured_device`
+- `read_properties_for_configured_objects`
+
+Setup:
+
+```bash
+cd process
+cp tests/fixtures/bacnet-device.example.json tests/fixtures/bacnet-device.json
+```
+
+Update `tests/fixtures/bacnet-device.json` with your local bind address,
+broadcast address, device IP/device id, and the object properties you want to
+read.
+
+Run the live tests:
+
+```bash
+make test-live
+```
+
+You can also point at a different config file:
+
+```bash
+cd process
+BACNET_TEST_CONFIG=/path/to/device.json cargo test --test bacnet_live -- --ignored --nocapture
+```

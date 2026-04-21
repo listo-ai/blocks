@@ -2,10 +2,19 @@
 //!
 //! Three kinds:
 //!
-//!   * `com.listo.mqtt-client.client`  — holds broker settings + session
-//!   * `com.listo.mqtt-client.pub`     — publishes inbound msgs to a topic
+//!   * `com.listo.mqtt-client.client`  — holds broker settings + session.
+//!     The manifest declares `state` / `detail` status slots (the Studio
+//!     reads them for the PLC-style node indicator), but the process-block
+//!     SDK's `GraphAccess` is a stub today (see
+//!     `agent-sdk/blocks-sdk/src/process.rs` — `StubGraph`), so the
+//!     event-loop task can only log. As soon as the slot-write RPC lands
+//!     (`NODE-RED-MODEL.md` Stage 3b/3c) the event-loop branch below
+//!     switches to `graph.write_slot`.
+//!   * `com.listo.mqtt-client.pub`     — publishes inbound msgs to a topic.
+//!     Supports Node-RED-style per-msg topic/qos/retain overrides and emits
+//!     a stats msg on `out` synchronously after the publish is queued.
 //!   * `com.listo.mqtt-client.sub`     — subscribes to a topic (output wiring
-//!                                       pending streaming-emit RPC)
+//!     pending the same streaming-emit RPC as the client-state watcher).
 //!
 //! All three share a process-wide `Registry` of MQTT sessions keyed by
 //! the client node's path, so pub/sub look their parent client's
@@ -20,14 +29,18 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 use std::time::Duration;
 
-use rumqttc::{AsyncClient, EventLoop, MqttOptions, QoS};
+use rumqttc::{
+    matches as topic_matches, AsyncClient, ConnectionError, Event, EventLoop, Incoming,
+    MqttOptions, Publish as MqttPublish, QoS,
+};
 use serde::Deserialize;
+use serde_json::json;
 
 use blocks_sdk::{
     ctx::NodeCtx,
     error::NodeError,
     node::{InputPort, NodeBehavior},
-    process::{run_process_plugin, BlockIdentity},
+    process::{publish_slot_event, run_process_plugin, BlockIdentity},
     Msg, NodeKind, NodePath,
 };
 use tokio::sync::Mutex;
@@ -74,10 +87,10 @@ impl NodeBehavior for Client {
     fn on_init(&self, ctx: &NodeCtx, cfg: &Self::Config) -> Result<(), NodeError> {
         let path = ctx.node_path().clone();
         let cfg = cfg.clone();
+        tracing::info!(node = %path.as_str(), host = %cfg.host, port = cfg.port, "client on_init — opening session");
+        publish_client_state(&path, "CONNECTING", "opening connection");
         tokio::spawn(async move {
-            if let Err(e) = registry().connect(path.clone(), cfg).await {
-                tracing::warn!(node = %path.as_str(), error = %e, "mqtt connect failed");
-            }
+            registry().connect(path, cfg).await;
         });
         Ok(())
     }
@@ -90,17 +103,17 @@ impl NodeBehavior for Client {
     fn on_config_change(&self, ctx: &NodeCtx, cfg: &Self::Config) -> Result<(), NodeError> {
         let path = ctx.node_path().clone();
         let cfg = cfg.clone();
+        tracing::info!(node = %path.as_str(), host = %cfg.host, port = cfg.port, "client on_config_change — reopening session");
         tokio::spawn(async move {
             registry().disconnect(&path).await;
-            if let Err(e) = registry().connect(path.clone(), cfg).await {
-                tracing::warn!(node = %path.as_str(), error = %e, "mqtt reconnect failed");
-            }
+            registry().connect(path, cfg).await;
         });
         Ok(())
     }
 
     fn on_shutdown(&self, ctx: &NodeCtx) -> Result<(), NodeError> {
         let path = ctx.node_path().clone();
+        publish_client_state(&path, "OFF", "shut down");
         tokio::spawn(async move {
             registry().disconnect(&path).await;
         });
@@ -146,43 +159,66 @@ impl NodeBehavior for Publish {
             return Err(NodeError::runtime(format!("unexpected port `{port}`")));
         }
 
-        // Decode the typed PublishConfig out of the node's settings
-        // blob.
-        let cfg: PublishConfig = serde_json::from_value(ctx.config().clone())
-            .map_err(|e| NodeError::InvalidConfig(e.to_string()))?;
-        if cfg.topic.is_empty() {
-            return Err(NodeError::runtime("pub node has no topic configured"));
+        // Resolve settings honouring msg_overrides declared in the
+        // manifest (qos / retain / topic from msg.metadata). Topic also
+        // accepts `msg.topic` top-level per Node-RED convention.
+        let cfg: PublishConfig = ctx.resolve_settings::<PublishConfig>(&msg)?.into_inner();
+        let topic = msg
+            .topic
+            .clone()
+            .filter(|t| !t.is_empty())
+            .unwrap_or(cfg.topic);
+        if topic.is_empty() {
+            let err = "pub: no topic configured and msg.topic is empty".to_string();
+            emit_stats(ctx, false, "", cfg.qos, cfg.retain, 0, Some(&err));
+            return Err(NodeError::runtime(err));
         }
 
-        // Pub/Sub share the parent client's MQTT session. The parent
-        // path is the immediate ancestor in the graph tree.
+        // Pub/Sub share the parent client's MQTT session.
         let Some(parent_path) = ctx.node_path().parent() else {
             return Err(NodeError::runtime(
                 "pub node must live under a client — has no parent",
             ));
         };
 
-        // Fire-and-forget publish. Returning an error from on_message
-        // surfaces as a behaviour error on the engine side; we keep
-        // this path happy and log async failures via tracing.
         let qos = parse_qos(cfg.qos);
         let payload = payload_bytes(&msg);
-        tokio::spawn(async move {
-            let Some(client) = registry().handle(&parent_path).await else {
-                tracing::warn!(
-                    parent = %parent_path.as_str(),
-                    "pub: parent client not connected — message dropped",
-                );
-                return;
-            };
-            if let Err(e) = client
-                .publish(&cfg.topic, qos, cfg.retain, payload)
-                .await
-            {
-                tracing::warn!(topic = %cfg.topic, error = %e, "mqtt publish failed");
-            }
+        let bytes = payload.len() as u64;
+
+        // `client.publish()` on rumqttc just queues onto an in-process
+        // mpsc channel (the event loop does the network work), so it's
+        // fast and safe to block_on inside an RPC dispatch. Running it
+        // synchronously is what lets us emit the stats envelope on `out`
+        // within the same `on_message` call — the process-block SDK
+        // only returns emits captured during the sync dispatch (see
+        // agent-sdk/blocks-sdk/src/process.rs::CapturingEmitSink).
+        let publish_result = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async {
+                match registry().handle(&parent_path).await {
+                    Some(client) => client.publish(&topic, qos, cfg.retain, payload).await
+                        .map_err(|e| e.to_string()),
+                    None => Err(format!(
+                        "parent client `{}` not connected",
+                        parent_path.as_str()
+                    )),
+                }
+            })
         });
-        Ok(())
+
+        match publish_result {
+            Ok(()) => {
+                emit_stats(ctx, true, &topic, cfg.qos, cfg.retain, bytes, None);
+                Ok(())
+            }
+            Err(err) => {
+                tracing::warn!(%topic, error = %err, "mqtt publish failed");
+                emit_stats(ctx, false, &topic, cfg.qos, cfg.retain, bytes, Some(&err));
+                // Don't propagate — the stats envelope on `out` is the
+                // error surface for downstream. Bubbling here would log
+                // twice and Node-RED pub nodes swallow transport errors.
+                Ok(())
+            }
+        }
     }
 }
 
@@ -226,13 +262,25 @@ impl NodeBehavior for Subscribe {
                 "sub node must live under a client — has no parent",
             ));
         };
+        let sub_path = ctx.node_path().clone();
         let topic = cfg.topic.clone();
         let qos = parse_qos(cfg.qos);
+
+        // Register this sub with its client's fan-out table BEFORE the
+        // broker ACKs the subscription, so a Publish delivered in the
+        // same tick doesn't race us and drop. The event-loop pump
+        // (drive_event_loop) matches every incoming Publish against
+        // the filter we register here.
+        let parent_for_reg = parent_path.clone();
+        let topic_for_reg = topic.clone();
         tokio::spawn(async move {
-            let Some(client) = registry().handle(&parent_path).await else {
+            registry()
+                .register_sub(&parent_for_reg, sub_path, topic_for_reg)
+                .await;
+            let Some(client) = registry().handle(&parent_for_reg).await else {
                 tracing::warn!(
-                    parent = %parent_path.as_str(),
-                    "sub: parent client not connected — subscribe skipped",
+                    parent = %parent_for_reg.as_str(),
+                    "sub: parent client not connected — subscribe skipped (will resume when client (re)connects)",
                 );
                 return;
             };
@@ -244,10 +292,20 @@ impl NodeBehavior for Subscribe {
     }
 
     fn on_message(&self, _ctx: &NodeCtx, _port: InputPort, _msg: Msg) -> Result<(), NodeError> {
-        // `sub` has no inputs. Inbound MQTT messages need to push up
-        // into the engine via a streaming-emit RPC that isn't wired
-        // yet (see blocks-sdk/src/process.rs). For now, this kind
-        // registers the subscription and logs received messages.
+        // `sub` has no inputs. Inbound MQTT messages arrive on the
+        // parent client's event loop and are forwarded via
+        // `publish_slot_event(sub_path, "out", msg_json)`.
+        Ok(())
+    }
+
+    fn on_shutdown(&self, ctx: &NodeCtx) -> Result<(), NodeError> {
+        let Some(parent_path) = ctx.node_path().parent() else {
+            return Ok(());
+        };
+        let sub_path = ctx.node_path().clone();
+        tokio::spawn(async move {
+            registry().unregister_sub(&parent_path, &sub_path).await;
+        });
         Ok(())
     }
 }
@@ -263,6 +321,18 @@ fn registry() -> &'static Registry {
 
 struct Registry {
     sessions: Mutex<HashMap<NodePath, Session>>,
+    /// Sub-node fan-out table, keyed by parent client path. The event
+    /// loop walks the vec for each incoming Publish and dispatches to
+    /// matching filters. A `Mutex` (not `RwLock`) is fine: churn is
+    /// low — writes only on sub create/destroy — and reads are on the
+    /// MQTT event loop which is already `.await`-heavy.
+    subs: Mutex<HashMap<NodePath, Vec<SubEntry>>>,
+}
+
+#[derive(Clone)]
+struct SubEntry {
+    sub_path: NodePath,
+    filter: String,
 }
 
 struct Session {
@@ -275,12 +345,37 @@ impl Registry {
     fn new() -> Self {
         Self {
             sessions: Mutex::new(HashMap::new()),
+            subs: Mutex::new(HashMap::new()),
         }
     }
 
-    /// Open a connection for a client node. If a session already exists
-    /// under this path it is torn down first (on_config_change case).
-    async fn connect(&self, path: NodePath, cfg: ClientConfig) -> Result<(), MqttError> {
+    async fn register_sub(&self, client_path: &NodePath, sub_path: NodePath, filter: String) {
+        let mut subs = self.subs.lock().await;
+        let list = subs.entry(client_path.clone()).or_default();
+        // Replace existing entry for this sub_path (on_init re-run after
+        // settings change) rather than duplicating.
+        list.retain(|e| e.sub_path != sub_path);
+        list.push(SubEntry { sub_path, filter });
+    }
+
+    async fn unregister_sub(&self, client_path: &NodePath, sub_path: &NodePath) {
+        let mut subs = self.subs.lock().await;
+        if let Some(list) = subs.get_mut(client_path) {
+            list.retain(|e| e.sub_path != *sub_path);
+            if list.is_empty() {
+                subs.remove(client_path);
+            }
+        }
+    }
+
+    async fn subs_for(&self, client_path: &NodePath) -> Vec<SubEntry> {
+        let subs = self.subs.lock().await;
+        subs.get(client_path).cloned().unwrap_or_default()
+    }
+
+    /// Open a connection for a client node. A second call under the same
+    /// path replaces the previous session (on_config_change case).
+    async fn connect(&self, path: NodePath, cfg: ClientConfig) {
         let client_id = if cfg.client_id.is_empty() {
             path.as_str().to_owned()
         } else {
@@ -297,14 +392,12 @@ impl Registry {
 
         let (client, mut event_loop) = AsyncClient::new(opts, 64);
 
-        let path_log = path.clone();
+        let path_for_task = path.clone();
         let task = tokio::spawn(async move {
-            drive_event_loop(path_log, &mut event_loop).await;
+            drive_event_loop(path_for_task, &mut event_loop).await;
         });
 
         let mut sessions = self.sessions.lock().await;
-        // Replace previous session, dropping its task (and thus its
-        // event loop).
         sessions.insert(
             path,
             Session {
@@ -312,7 +405,6 @@ impl Registry {
                 _task: task,
             },
         );
-        Ok(())
     }
 
     async fn disconnect(&self, path: &NodePath) {
@@ -348,34 +440,128 @@ impl ClientHandle {
     }
 }
 
+/// Event-loop pump. rumqttc handles TCP reconnect internally; the branches
+/// below classify each transition for logs today and for slot-state writes
+/// once the process-side `GraphAccess` RPC lands (see module docs).
 async fn drive_event_loop(path: NodePath, el: &mut EventLoop) {
     loop {
         match el.poll().await {
+            Ok(Event::Incoming(Incoming::ConnAck(_))) => {
+                tracing::info!(node = %path.as_str(), state = "OK", "mqtt connected");
+                publish_client_state(&path, "OK", "connected");
+            }
+            Ok(Event::Incoming(Incoming::Publish(p))) => {
+                dispatch_publish(&path, &p).await;
+            }
+            Ok(Event::Incoming(Incoming::Disconnect)) => {
+                tracing::warn!(node = %path.as_str(), state = "WARNING", "broker disconnected");
+                publish_client_state(&path, "WARNING", "broker disconnected");
+            }
             Ok(event) => {
                 tracing::debug!(node = %path.as_str(), ?event, "mqtt event");
             }
             Err(e) => {
-                tracing::warn!(node = %path.as_str(), error = %e, "mqtt connection error");
-                // Back off a moment before the event loop reconnects
-                // — rumqttc handles reconnection internally.
+                let (state, detail) = classify_error(&e);
+                tracing::warn!(node = %path.as_str(), state, error = %e, "mqtt connection error");
+                publish_client_state(&path, state, &detail);
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
         }
     }
 }
 
+/// For each sub-node under this client whose filter matches the
+/// incoming topic, build a Node-RED-style `Msg` and push it onto the
+/// process-wide slot-event bus. The agent-side consumer (see
+/// `blocks-host/src/host.rs::run_slot_event_consumer`) writes it to
+/// each sub's `out` slot.
+async fn dispatch_publish(client_path: &NodePath, p: &MqttPublish) {
+    let subs = registry().subs_for(client_path).await;
+    if subs.is_empty() {
+        return;
+    }
+    let payload = decode_payload(&p.payload);
+    for entry in subs {
+        if !topic_matches(&p.topic, &entry.filter) {
+            continue;
+        }
+        let msg = Msg::new(payload.clone()).with_topic(p.topic.clone());
+        let Ok(msg_json) = serde_json::to_value(&msg) else {
+            continue;
+        };
+        let delivered = publish_slot_event(&entry.sub_path, "out", &msg_json);
+        if delivered == 0 {
+            tracing::debug!(
+                sub = %entry.sub_path.as_str(), topic = %p.topic,
+                "slot-event bus has no agent-side subscriber yet — dropping",
+            );
+        }
+    }
+}
+
+/// Payloads coming off the broker are `Vec<u8>`. Treat valid JSON as
+/// structured data (Node-RED parity — `msg.payload` becomes an object);
+/// fall back to UTF-8 string, then to a base64-less byte array.
+fn decode_payload(bytes: &[u8]) -> serde_json::Value {
+    if let Ok(v) = serde_json::from_slice::<serde_json::Value>(bytes) {
+        return v;
+    }
+    match std::str::from_utf8(bytes) {
+        Ok(s) => json!(s),
+        Err(_) => json!(bytes.to_vec()),
+    }
+}
+
+fn publish_client_state(path: &NodePath, state: &str, detail: &str) {
+    // `state` is scalar-per-slot (value_kind: string); `detail` same.
+    // Matches the manifest in kinds/client.yaml exactly — keep in sync.
+    let _ = publish_slot_event(path, "state", &json!(state));
+    let _ = publish_slot_event(path, "detail", &json!(detail));
+}
+
+fn classify_error(e: &ConnectionError) -> (&'static str, String) {
+    match e {
+        ConnectionError::ConnectionRefused(_) | ConnectionError::NotConnAck(_) => {
+            ("ERROR", e.to_string())
+        }
+        _ => ("WARNING", e.to_string()),
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Publish stats emit
+// ---------------------------------------------------------------------------
+
+/// Build and emit the publish-stats envelope on the pub node's `out`
+/// port. Called synchronously from inside `on_message` so the SDK's
+/// `CapturingEmitSink` picks it up and returns it with the RPC response.
+fn emit_stats(
+    ctx: &NodeCtx,
+    success: bool,
+    topic: &str,
+    qos: u8,
+    retain: bool,
+    bytes: u64,
+    error: Option<&str>,
+) {
+    let mut payload = serde_json::Map::new();
+    payload.insert("success".into(), json!(success));
+    payload.insert("topic".into(), json!(topic));
+    payload.insert("qos".into(), json!(qos));
+    payload.insert("retain".into(), json!(retain));
+    payload.insert("bytes".into(), json!(bytes));
+    if let Some(e) = error {
+        payload.insert("error".into(), json!(e));
+    }
+    let msg = Msg::new(serde_json::Value::Object(payload)).with_topic(topic.to_owned());
+    if let Err(e) = ctx.emit("out", msg) {
+        tracing::warn!(error = %e, "pub: stats emit failed");
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-#[derive(Debug, thiserror::Error)]
-enum MqttError {
-    // Reserved for future connect-side errors that we want to surface.
-    // Connect itself is fire-and-forget via rumqttc today.
-    #[allow(dead_code)]
-    #[error("{0}")]
-    Other(String),
-}
 
 fn parse_qos(n: u8) -> QoS {
     match n {

@@ -217,14 +217,14 @@ impl NodeBehavior for Point {
                 return;
             };
 
-            let addr: SocketAddr =
-                match format!("{}:{}", device_cfg.host, device_cfg.port).parse() {
-                    Ok(a) => a,
-                    Err(e) => {
-                        tracing::warn!(node = %node_path.as_str(), error = %e, "invalid device address");
-                        return;
-                    }
-                };
+            let addr: SocketAddr = match format!("{}:{}", device_cfg.host, device_cfg.port).parse()
+            {
+                Ok(a) => a,
+                Err(e) => {
+                    tracing::warn!(node = %node_path.as_str(), error = %e, "invalid device address");
+                    return;
+                }
+            };
 
             match cfg.direction {
                 PointDirection::Read => {
