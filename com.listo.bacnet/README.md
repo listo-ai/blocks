@@ -6,9 +6,9 @@ BACnet/IP connectivity block for the Listo agent.
 
 | Kind | Description |
 |------|-------------|
-| `com.listo.bacnet.device` | Holds broker address + BACnet device config. Acts as a container for read/write nodes. |
-| `com.listo.bacnet.read` | Reads a single BACnet property on trigger. |
-| `com.listo.bacnet.write` | Writes a value to a BACnet property from an inbound message. |
+| `com.listo.bacnet.driver` | Manages the local BACnet/IP interface. Top-level container for devices. |
+| `com.listo.bacnet.device` | A remote BACnet device (lives under a driver). Container for points. |
+| `com.listo.bacnet.point` | A single BACnet object property — `direction: read` or `write` (lives under a device). |
 
 ## Quick start
 
@@ -27,9 +27,9 @@ make clean    # remove all build artefacts
 
 ## Architecture
 
-- **process/src/main.rs** — Tokio-based process block. Uses [`bacnet-rs`](https://github.com/bacnet-rs/bacnet-rs) (0.3) for BACnet/IP.
-- **ui-src/src/Panel.tsx** — React sidebar panel (Module Federation remote).
-- **kinds/** — YAML manifests for each node kind.
+- **process/src/main.rs** — Tokio-based process block (`Driver` / `Device` / `Point`). Uses [`bacnet-rs`](https://github.com/bacnet-rs/bacnet-rs) (0.3) for BACnet/IP.
+- **ui-src/src/Panel.tsx** — React sidebar panel (Module Federation remote). Lists driver nodes.
+- **kinds/** — YAML manifests: `driver.yaml`, `device.yaml`, `point.yaml`.
 
 ## Notes
 

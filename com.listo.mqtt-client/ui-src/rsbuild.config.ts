@@ -8,11 +8,30 @@ import { MF_SHARED_SINGLETONS } from "@listo/block-ui-sdk/mf";
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+function requireEnv(name: string): string {
+  const v = process.env[name];
+  if (!v) {
+    throw new Error(
+      `${name} is required to build this block — set it at build time, e.g.\n` +
+        `  PUBLIC_AGENT_URL=http://localhost:8082 pnpm build`,
+    );
+  }
+  return v;
+}
+
 export default defineConfig({
   plugins: [pluginReact()],
 
   source: {
     entry: { index: "./src/index.ts" },
+    // `PUBLIC_AGENT_URL` is the agent the block's bundled AgentClient
+    // connects to. Required — set it explicitly at build time; fail
+    // loudly otherwise, don't silently default.
+    define: {
+      "import.meta.env.PUBLIC_AGENT_URL": JSON.stringify(
+        requireEnv("PUBLIC_AGENT_URL"),
+      ),
+    },
   },
 
   output: {

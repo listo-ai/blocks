@@ -1,7 +1,7 @@
 /**
  * com.listo.bacnet — sidebar panel.
  *
- * Lists every `com.listo.bacnet.device` node in the graph and
+ * Lists every `com.listo.bacnet.driver` node in the graph and
  * renders its settings form. Settings are persisted to each node's
  * `settings` slot via the shared `useNodeSettings` + `NodeSettingsForm`
  * helpers from `@listo/block-ui-sdk`.
@@ -15,7 +15,7 @@ import {
   useNodeSettings,
 } from "@listo/block-ui-sdk";
 
-const DEVICE_KIND = "com.listo.bacnet.device";
+const DRIVER_KIND = "com.listo.bacnet.driver";
 
 export default function Panel() {
   const { data: agent } = useAgentClient();
@@ -23,10 +23,10 @@ export default function Panel() {
 
   const devices = useQuery<Array<{ path: string }>>({
     enabled: !!agent,
-    queryKey: ["bacnet", "devices"],
+    queryKey: ["bacnet", "drivers"],
     queryFn: async () => {
       const page = await agent!.nodes.getNodesPage({
-        filter: `kind==${DEVICE_KIND}`,
+        filter: `kind==${DRIVER_KIND}`,
         size: 100,
       });
       return page.data;
@@ -35,7 +35,7 @@ export default function Panel() {
   });
 
   return (
-    <BlockShell title="BACnet Devices">
+    <BlockShell title="BACnet Drivers">
       {devices.isLoading && <Empty>Loading…</Empty>}
       {devices.error && (
         <Empty tone="error">
@@ -46,19 +46,19 @@ export default function Panel() {
       )}
       {devices.data && devices.data.length === 0 && (
         <Empty>
-          No BACnet device nodes yet. Drop a{" "}
-          <code className="font-mono">{DEVICE_KIND}</code> onto a flow, then
+          No BACnet driver nodes yet. Drop a{" "}
+          <code className="font-mono">{DRIVER_KIND}</code> onto a flow, then
           come back here to configure it.
         </Empty>
       )}
       {devices.data && devices.data.length > 0 && (
         <div className="space-y-4">
-          <DeviceList
+          <DriverList
             items={devices.data.map((n) => ({ path: n.path, label: n.path }))}
             selected={selected}
             onSelect={setSelected}
           />
-          {selected && <DeviceEditor nodePath={selected} />}
+          {selected && <DriverEditor nodePath={selected} />}
         </div>
       )}
     </BlockShell>
@@ -67,7 +67,7 @@ export default function Panel() {
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 
-function DeviceList({
+function DriverList({
   items,
   selected,
   onSelect,
@@ -98,7 +98,7 @@ function DeviceList({
   );
 }
 
-function DeviceEditor({ nodePath }: { nodePath: string }) {
+function DriverEditor({ nodePath }: { nodePath: string }) {
   const { schema, settings, save, isSaving } = useNodeSettings(nodePath);
 
   if (!schema) return <Empty>Loading settings…</Empty>;

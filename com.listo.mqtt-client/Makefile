@@ -20,6 +20,14 @@ DIST        := $(BLOCK_DIR)/dist
 EDGE_URL  := http://localhost:8082
 CLOUD_URL := http://localhost:8081
 
+# `PUBLIC_AGENT_URL` is baked into the UI bundle at build time and is
+# what the block's `@listo/ui-core` AgentClient connects to. **No
+# fallback.** Set it explicitly; the `edge:` / `cloud:` targets below
+# supply it for the dev ports. `make ui` on its own leaves it unset
+# and the build fails — run `make edge` / `make cloud` or prefix
+# explicitly, e.g.
+#   PUBLIC_AGENT_URL=http://prod.example.com:8080 make ui
+
 .PHONY: build ui process edge cloud install-edge install-cloud uninstall run clean reload reload-edge reload-cloud help
 
 build: ui process ## Build UI bundle + native process binary
@@ -32,7 +40,7 @@ build: ui process ## Build UI bundle + native process binary
 ui: $(BLOCK_DIR)/ui/remoteEntry.js ## Build the Module-Federation UI bundle
 
 $(BLOCK_DIR)/ui/remoteEntry.js: ui-src/src/*.tsx ui-src/src/*.ts ui-src/package.json ui-src/rsbuild.config.ts
-	cd ui-src && pnpm build
+	cd ui-src && PUBLIC_AGENT_URL=$(PUBLIC_AGENT_URL) pnpm build
 
 # -----------------------------------------------------------------------------
 # Process-block binary (native)
@@ -49,8 +57,13 @@ $(DIST)/process: process/src/main.rs process/Cargo.toml kinds/*.yaml
 # Stage into an agent's blocks dir
 # -----------------------------------------------------------------------------
 
-edge: install-edge reload-edge ## Build + stage into edge-blocks/ + hot-reload if running
-cloud: install-cloud reload-cloud ## Build + stage into cloud-blocks/ + hot-reload if running
+edge: ## Build + stage into edge-blocks/ + hot-reload (bakes PUBLIC_AGENT_URL=$(EDGE_URL))
+	$(MAKE) install-edge PUBLIC_AGENT_URL=$(EDGE_URL)
+	$(MAKE) reload-edge
+
+cloud: ## Build + stage into cloud-blocks/ + hot-reload (bakes PUBLIC_AGENT_URL=$(CLOUD_URL))
+	$(MAKE) install-cloud PUBLIC_AGENT_URL=$(CLOUD_URL)
+	$(MAKE) reload-cloud
 
 install-edge: build
 	@mkdir -p $(AGENT_DEV)/edge-blocks

@@ -1,0 +1,66 @@
+# com.listo.bacnet — point node.
+#
+# Represents a single BACnet object property (a "point"). Must live
+# under a device. Direction controls whether inbound messages trigger a
+# read (value is emitted on `out`) or a write (payload is written to
+# the property).
+
+id: com.listo.bacnet.point
+display_name: BACnet Point
+
+facets:
+  - isCompute
+
+containment:
+  must_live_under:
+    - kind: com.listo.bacnet.device
+  may_contain: []
+  cardinality_per_parent: many_per_parent
+  cascade: strict
+
+slots:
+  - name: in
+    direction: input
+    description: >-
+      Read mode: triggers a ReadProperty request (payload ignored).
+      Write mode: payload value is written to the property.
+  - name: out
+    direction: output
+    description: >-
+      Read mode: the property value returned by the device.
+      Write mode: echo of the written value on success.
+
+settings_schema:
+  type: object
+  properties:
+    direction:
+      type: string
+      title: Direction
+      enum: [read, write]
+      default: read
+    object_type:
+      type: string
+      title: Object type
+      description: "e.g. analog-input, binary-output, multi-state-value"
+      default: "analog-input"
+    object_instance:
+      type: integer
+      title: Object instance
+      default: 0
+      minimum: 0
+    property:
+      type: string
+      title: Property identifier
+      description: "e.g. present-value, object-name, units"
+      default: "present-value"
+    priority:
+      type: integer
+      title: Write priority (1–16, write mode only)
+      default: 16
+      minimum: 1
+      maximum: 16
+  required:
+    - direction
+    - object_type
+    - object_instance
+    - property

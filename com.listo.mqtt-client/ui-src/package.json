@@ -9,9 +9,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@listo/block-ui-sdk": "workspace:*",
+    "@listo/agent-client": "workspace:^0.1.0",
+    "@listo/block-ui-sdk": "workspace:^0.1.0",
+    "@listo/ui-core": "workspace:^0.1.0",
+    "@listo/ui-kit": "workspace:^0.1.0",
     "@tanstack/react-query": "^5.40.0"
   },
+  "_comment_devDeps": "The @listo/* devDependencies are BUILD-TIME only — rspack's Module Federation plugin reads their version from node_modules to compute the shared-singleton requiredVersion. Source code must still import only from @listo/block-ui-sdk (the block author's facade).",
   "devDependencies": {
     "@module-federation/enhanced": "^0.6.16",
     "@rsbuild/core": "^1.0.0",

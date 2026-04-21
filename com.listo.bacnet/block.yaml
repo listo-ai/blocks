@@ -2,8 +2,8 @@ id: com.listo.bacnet
 version: 0.1.0
 display_name: "BACnet"
 description: >-
-  BACnet/IP connectivity: a device node holds the connection; read and write
-  nodes live under it and share the session.
+  BACnet/IP connectivity: a driver manages the local interface; devices are
+  remote BACnet nodes; points are individual object properties (read or write).
 
 contributes:
   ui:
@@ -17,9 +17,9 @@ contributes:
     path: dist/process
 
   kinds:
+    - kinds/driver.yaml
     - kinds/device.yaml
-    - kinds/read.yaml
-    - kinds/write.yaml
+    - kinds/point.yaml
 
 requires:
   - id: spi.msg

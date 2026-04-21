@@ -1,0 +1,55 @@
+# com.listo.bacnet — driver node.
+#
+# Manages the local BACnet/IP interface configuration. Acts as the top-level
+# container: all remote devices and their points live underneath it.
+#
+# One driver per network interface / BBMD configuration. Multiple drivers
+# are allowed so you can bridge separate BACnet segments.
+
+id: com.listo.bacnet.driver
+display_name: BACnet Driver
+
+facets:
+  - isCompute
+  - isIdentity
+
+containment:
+  must_live_under: []
+  may_contain:
+    - kind: com.listo.bacnet.device
+  cardinality_per_parent: many_per_parent
+  cascade: strict
+
+slots: []
+
+settings_schema:
+  type: object
+  properties:
+    local_addr:
+      type: string
+      title: Local bind address
+      description: >-
+        UDP address this driver binds to (e.g. 0.0.0.0 to listen on all
+        interfaces, or a specific NIC IP for multi-homed hosts).
+      default: "0.0.0.0"
+    local_port:
+      type: integer
+      title: Local UDP port
+      default: 47808
+      minimum: 1
+      maximum: 65535
+    broadcast_addr:
+      type: string
+      title: Broadcast / BBMD address
+      description: >-
+        Subnet broadcast address or BBMD IP used for Who-Is discovery
+        (e.g. 192.168.1.255).
+      default: "255.255.255.255"
+    timeout_ms:
+      type: integer
+      title: Default request timeout (ms)
+      default: 3000
+      minimum: 100
+  required:
+    - local_addr
+    - local_port
