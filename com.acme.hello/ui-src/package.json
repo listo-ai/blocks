@@ -1,0 +1,26 @@
+{
+  "name": "@acme/hello-block-ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "rsbuild dev",
+    "build": "rsbuild build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@listo/block-ui-sdk": "workspace:*",
+    "@listo/ui-core": "workspace:*",
+    "@listo/ui-kit": "workspace:*"
+  },
+  "devDependencies": {
+    "@module-federation/enhanced": "^0.6.16",
+    "@rsbuild/core": "^1.0.0",
+    "@rsbuild/plugin-react": "^1.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.4.0"
+  }
+}
